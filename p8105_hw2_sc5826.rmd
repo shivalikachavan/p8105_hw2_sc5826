@@ -7,6 +7,7 @@ output: github_document
 ```{r message=FALSE}
 library(tidyverse)
 library(haven)
+# order of levels for making month into a factor so the months are in chronological order, not alphabetical
 month_order = c("January","February","March","April","May","June","July","August","September","October","November","December") 
 ```
 
@@ -33,7 +34,7 @@ pols_month = read.csv("./data/fivethirtyeight_datasets/pols-month.csv") |>
         `11` = "November",
         `12` = "December"
         ),
-    month = factor(month, levels = month_order),
+    month = factor(month, levels = month_order), 
     president = 
       recode(
         prez_dem, # using prez_dem to create president since grez_gop has erroneous values of 2
