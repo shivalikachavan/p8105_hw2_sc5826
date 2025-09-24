@@ -38,7 +38,7 @@ pols_month = read.csv("./data/fivethirtyeight_datasets/pols-month.csv") |>
     month = factor(month, levels = month_order), 
     president = 
       recode(
-        prez_dem, # using prez_dem to create president since grez_gop has erroneous values of 2
+        prez_dem, # using prez_dem to create president since prez_gop has erroneous values of 2
         `0` = "gop",
         `1` = "dem"
       )
@@ -227,7 +227,7 @@ trash_wheel_data = bind_rows(mr_trash_wheel_data, prof_trash_wheel_data, gwynnda
 In `mr_trash_wheel_data`, there are `r nrow(mr_trash_wheel_data)` observations and `r length(unique(pull(mr_trash_wheel_data,dumpster)))` unique dumpsters. In `prof_trash_wheel_data`, there are `r nrow(prof_trash_wheel_data)` observations and `r length(unique(pull(prof_trash_wheel_data,dumpster)))` unique dumpsters. In `gwynnda_trash_wheel_data`, there are `r nrow(gwynnda_trash_wheel_data)` observations and only `r length(unique(pull(gwynnda_trash_wheel_data,dumpster)))` unique dumpsters. This is unlike the other 2 datasets, which have 1 observation for each dumpster. Looking closer at `gwynnda_trash_wheel_data`, dumpster 21 has `r sum(pull(gwynnda_trash_wheel_data, dumpster) == 21)` observations.
 
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=TRUE}
 #Doing calculations here to keep the inline R code relatively clean. 
 total_weight_tons_prof_trash_wheel = trash_wheel_data |> 
   filter(trash_wheel == "Professor Trash Wheel") |> 
