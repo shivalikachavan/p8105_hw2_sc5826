@@ -251,5 +251,89 @@ The combined data set `trash_wheel_data` has `r nrow(trash_wheel_data)` observat
 
 
 ## Problem 3
+Cleaning the `zip_codes_nyc` data set. FIPS is Federal Information Processing System Codes for States and Counties. 
+```{r collapse=TRUE}
+zip_codes_nyc = read.csv("./data/zillow_data/zip_codes.csv") |> 
+  janitor::clean_names()|> 
+  select(-state_fips, -file_date) |> 
+  relocate(county_code, county_fips, county)
+```
+It makes sense that the state FIPS code is the same for all zip codes in the state of NYC (all are in New York). I verified this by looking at all of the unique `state_fips` (there is 1). It also happens to be that every observation has the same `file_date` of `7/25/07`. After a brief search on Google, I'm assuming that these zip codes were filed in the early days of Zillow, which launched in 2006. These variables are not really relevant to the data set, so I'm going to exclude them from the working data set. I'm also moving the county code/FIPS and county name to the front of the data set to have the more broad categories on the left.
 
+What's interesting with this data set is that while there are `r nrow(zip_codes_nyc)` observations, but only `r length(unique(zip_codes_nyc$zip_code))` unique zip codes. This means that there are 2 zip codes that are repeated in the data set. 
+```{r collapse=TRUE}
+repeated_zip_codes = zip_codes_nyc |> 
+  group_by(zip_code) |> 
+  count(zip_code) |> 
+  filter(n > 1) |> 
+  pull(zip_code)
+```
+The two repeated zip codes are `r repeated_zip_codes`. 
+```{r collapse=TRUE}
+zip_codes_nyc |> 
+  filter(zip_code %in% repeated_zip_codes) |> 
+  arrange(zip_code)
+```
+The zipcode 10463 for the Kingsbridge and Riverdale neighborhood appears twice, once in the Bronx and once in New York. The zipcode 11201 for the Northwest Brooklyn neighborhood appears twice, once in Kings and once in New York. 
 
+Moving onto the Zillow Observed Rent Indices (ZORI) index data set. 
+```{r}
+zori_nyc = read.csv("./data/zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    x2015_01_31:x2024_08_31,
+    names_to = "date",
+    names_prefix = "x",
+    values_to = "index"
+  ) |>
+  separate("date", into = c("year", "month", "day"), sep = "_", convert = TRUE) |>
+  mutate(
+    month =
+      recode(
+        month,
+        `1` = "January",
+        `2` = "February",
+        `3` = "March",
+        `4` = "April",
+        `5` = "May",
+        `6` = "June",
+        `7` = "July",
+        `8` = "August",
+        `9` = "September",
+        `10` = "October",
+        `11` = "November",
+        `12` = "December"
+        ),
+    month = factor(month, levels = month_order),
+    county = str_replace(county_name, " County", ""),
+    zip_code = region_name
+  ) |>
+  select(-county_name, -region_type, -region_name, -state_name, -state, -city, -metro) |> 
+  relocate(year, month, day, county, zip_code, region_id, size_rank, index)
+```
+First, I see that all of the dates with recorded ZORI is spread across a bunch of columns. This can be consolidated into a single `date` variable with the given index or `NA`. It looks like every `region_id` has some missing values, so there will be lots of `NA` indices. 
+
+Like in previous problems, I'm separating the date into `year`, `month`, and `day`, and setting month to be a factor so the default order is chronological, not alphabetical. 
+
+In the formatting of the original data set, I saw that there are 149 observations and each observation corresponds to a unique `region_id`, `size_rank`, `region_name`, and I want to keep these (or some version of these) in my final data set. 
+
+The `county_name` variable lists the `r length(unique(pull(zori_nyc, county)))` counties in NYC as __ County (e.g. Kings County). To match the style for county names in the `zip_codes_nyc` data set, I'm truncating "County" from each name. 
+
+Every `region_type` is `"zip"`, so I'm renaming `region_name` to `zip_code` to match the style for the zip codes in the `zip_codes_nyc` data set. 
+
+For studies looking at multiple states, cities, etc, the variables `state_name`, `state`, `city`, and `metro` would be useful, but since this study is focusing on New York City, keeping these variables seems repetitive. By including `nyc` in the data frame names, I'm effectively communicating the same information as these variables (i.e. someone unfamiliar with the data would be able to tell that this is data from New York City).
+
+So now, we have `zip_codes_nyc`, which has information about counties in NYC (and associated FIPS code and county code), zip codes, and neighborhoods. We also have `zori_nyc`, which also has information about counties in NYC, the zip codes, region IDs, and size ranks, as well as the ZORI at each date recorded. 
+```{r collapse=TRUE}
+colnames(zip_codes_nyc)
+colnames(zori_nyc)
+```
+When it comes to joining these two data sets, I have to keep in mind that simply joining on `zip_code` will not suffice, since 2 of the zip codes show up in multiple counties. The combination of 
+```{r collapse=TRUE}
+zori_nyc_neighborhoods = full_join(zori_nyc, zip_codes_nyc, by = c("zip_code", "county")) |> 
+  relocate(year, month, day, county, county_code, county_fips, neighborhood, size_rank, region_id, zip_code) |> 
+  arrange(year, month, day)
+colnames(zori_nyc_neighborhoods)
+```
+
+Looking at the final data set, we can see that there are `r ncol(zori_nyc_neighborhoods)` variables, which corresponds to the `r ncol(zori_nyc)` variables in `zori_nyc` plus the `county_code`, `county_fips`, and `neighborhood` variables found in `zip_codes_nyc` data set. The resulting data set is set in chronological order (putting the date-related variables at the beginning). After the date variables comes the variables related to the county (the name, code, and FIPS code). After county comes the neighborhood, followed by zip code related variables (size_rank, ID, zip code). The size rank is the city's rank by population size.
