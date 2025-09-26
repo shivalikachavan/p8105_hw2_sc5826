@@ -323,17 +323,70 @@ Every `region_type` is `"zip"`, so I'm renaming `region_name` to `zip_code` to m
 
 For studies looking at multiple states, cities, etc, the variables `state_name`, `state`, `city`, and `metro` would be useful, but since this study is focusing on New York City, keeping these variables seems repetitive. By including `nyc` in the data frame names, I'm effectively communicating the same information as these variables (i.e. someone unfamiliar with the data would be able to tell that this is data from New York City).
 
-So now, we have `zip_codes_nyc`, which has information about counties in NYC (and associated FIPS code and county code), zip codes, and neighborhoods. We also have `zori_nyc`, which also has information about counties in NYC, the zip codes, region IDs, and size ranks, as well as the ZORI at each date recorded. 
+So now, we have `zip_codes_nyc`, which has information about counties in NYC (and associated FIPS code and county code), zip codes, and neighborhoods. It has `r nrow(zip_codes_nyc)` observations. 
+
+
+We also have `zori_nyc`, which also has information about counties in NYC, the zip codes, region IDs, and size ranks, as well as the ZORI at each date recorded. It has `r nrow(zori_nyc)` observations. 
 ```{r collapse=TRUE}
 colnames(zip_codes_nyc)
 colnames(zori_nyc)
 ```
-When it comes to joining these two data sets, I have to keep in mind that simply joining on `zip_code` will not suffice, since 2 of the zip codes show up in multiple counties. The combination of 
+
+When it comes to joining these two data sets, I have to keep in mind that simply joining on `zip_code` will not suffice, since 2 of the zip codes show up in multiple counties. Since I am primarily interested in the ZORI data (with additional information on neighborhood), a left join on county and ZIP code makes the most sens. 
 ```{r collapse=TRUE}
-zori_nyc_neighborhoods = full_join(zori_nyc, zip_codes_nyc, by = c("zip_code", "county")) |> 
+zori_nyc_neighborhoods = left_join(zori_nyc, zip_codes_nyc, by = c("zip_code", "county")) |> 
   relocate(year, month, day, county, county_code, county_fips, neighborhood, size_rank, region_id, zip_code) |> 
   arrange(year, month, day)
 colnames(zori_nyc_neighborhoods)
 ```
 
 Looking at the final data set, we can see that there are `r ncol(zori_nyc_neighborhoods)` variables, which corresponds to the `r ncol(zori_nyc)` variables in `zori_nyc` plus the `county_code`, `county_fips`, and `neighborhood` variables found in `zip_codes_nyc` data set. The resulting data set is set in chronological order (putting the date-related variables at the beginning). After the date variables comes the variables related to the county (the name, code, and FIPS code). After county comes the neighborhood, followed by zip code related variables (size_rank, ID, zip code). The size rank is the city's rank by population size.
+
+There are `r nrow(zori_nyc_neighborhoods)` total observations in `zori_nyc_neighborhoods`, with `r length(unique(pull(zori_nyc_neighborhoods, zip_code)))` unique ZIP codes and `r length(unique(pull(zori_nyc_neighborhoods, neighborhood)))` unique neighborhoods.
+
+```{r}
+zip_codes_not_in_zori = anti_join(zip_codes_nyc, zori_nyc, by = c("county", "zip_code")) 
+
+codes_with_neighborhood_not_in_zori = zip_codes_not_in_zori |> 
+  filter(!is.na(neighborhood))
+bronx_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Bronx") 
+kings_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Kings") 
+newyork_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "New York") 
+queens_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Queens") 
+richmond_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Richmond") 
+```
+There are `r length(unique(pull(zip_codes_not_in_zori, zip_code)))` ZIP codes that appear in `zip_codes_nyc` but not `zori_nyc`. Of these, `r sum(is.na(pull(zip_codes_not_in_zori, neighborhood)))` ZIP codes have no associated neighborhood. The remaining `r length(unique(pull(zip_codes_not_in_zori, zip_code))) - sum(is.na(pull(zip_codes_not_in_zori, neighborhood)))` ZIP codes are in `r length(unique(pull(codes_with_neighborhood_not_in_zori, neighborhood)))` distinct neighborhoods across all 5 counties:
+
+  *    **Bronx** - `r unique(pull(bronx_neighborhoods, neighborhood))`
+  *    **Kings** - `r unique(pull(kings_neighborhoods, neighborhood))`
+  *    **New York** - `r unique(pull(newyork_neighborhoods, neighborhood))`
+  *    **Queens** - `r unique(pull(queens_neighborhoods, neighborhood))`
+  *    **Richmond** - `r unique(pull(richmond_neighborhoods, neighborhood))`
+  
+  
+# Add a few illustrative examples discuss why these ZIP codes might be excluded from the Zillow dataset.
+
+```{r}
+top10_rental_price_change = zori_nyc_neighborhoods |> 
+  filter(month == "January", year %in% c(2020, 2021), !is.na(index), !is.na(neighborhood)) |>
+  group_by(zip_code) |> 
+  filter(n() == 2) |> 
+  mutate(
+    date = paste(tolower(month), day, year, sep = "_")
+  ) |> 
+  select(-year, -month, -day) |> 
+  pivot_wider(
+    names_from = "date", 
+    values_from = "index"
+  ) |> 
+  summarize(
+    county = county,
+    neighborhood = neighborhood,
+    zip_code = zip_code,
+    index_change_covid = january_31_2021 - january_31_2020
+  ) |> 
+  arrange(index_change_covid) |> 
+  slice(1:10) 
+knitr::kable(top10_rental_price_change)
+```
+All of the biggest drops are in New York County, specifically in downtown Manhattan. The neighborhoods are `r unique(pull(top10_rental_price_change, neighborhood))`. These are all typically more expensive and have a large amount of rental properties (as compared to other neighborhoods that will have more properties that are occupied by the owner of the property)
