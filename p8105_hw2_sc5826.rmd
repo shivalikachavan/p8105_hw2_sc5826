@@ -368,7 +368,7 @@ The Zillow website says that the Zillow Observed Rent Index (ZORI) "measures cha
 Illustrative Examples:
 
   *    **South Shore, Richmond** - Home ownership rate was 79.3% in 2023 ([from DataUSA ](https://datausa.io/profile/geo/nyc-staten-island-community-district-3-south-shore-puma-ny))
-  * **Hunts Point and Mott Haven, Bronx ** - The land area in Hunts Point is dominated by industry ([from Wikipedia][https://en.wikipedia.org/wiki/Hunts_Point,_Bronx])
+  * **Hunts Point and Mott Haven, Bronx** - The land area in Hunts Point is dominated by industry ([from Wikipedia][https://en.wikipedia.org/wiki/Hunts_Point,_Bronx])
   * **Canarsie and Flatlands, Kings** - In 2023, the homeownership rate in Flatlands/Canarsie was 58.6% ([from NYU Furman Center ][https://furmancenter.org/neighborhoods/view/flatlands-canarsie])
 
 ```{r}
