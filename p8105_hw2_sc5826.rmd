@@ -49,8 +49,8 @@ pols_month = read.csv("./data/fivethirtyeight_datasets/pols-month.csv") |>
 ```
 
 Cleaning `snp.csv`. The `year` column is either `> 15` or `< 50`. I'm making the assumption that all the years `> 15` are in the 20th century (adding 1900) and all the years `< 50` are in the 21st century (adding 2000). Doing this makes the year column consistent across the `pols_month` and `snp` data frames. 
-```{r}
-snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") |> 
+```{r message = FALSE}
+snp = read_csv("./data/fivethirtyeight_datasets/snp.csv", show_col_types = FALSE) |> 
   janitor::clean_names() |> 
   separate("date", into = c("month", "day", "year"), sep = "/", convert = TRUE) |> 
   mutate(
@@ -84,7 +84,7 @@ snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") |>
 
 Cleaning `unemployment.csv`.
 ```{r}
-unemployment = read_csv("./data/fivethirtyeight_datasets/unemployment.csv") |> 
+unemployment = read_csv("./data/fivethirtyeight_datasets/unemployment.csv", show_col_types = FALSE) |> 
   janitor::clean_names() |> 
   pivot_longer(
     jan:dec,
