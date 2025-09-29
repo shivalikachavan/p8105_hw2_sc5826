@@ -346,30 +346,25 @@ There are `r nrow(zori_nyc_neighborhoods)` total observations in `zori_nyc_neigh
 
 ```{r}
 zip_codes_not_in_zori = anti_join(zip_codes_nyc, zori_nyc, by = c("county", "zip_code")) 
-
 codes_with_neighborhood_not_in_zori = zip_codes_not_in_zori |> 
   filter(!is.na(neighborhood))
-bronx_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Bronx") 
-kings_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Kings") 
-newyork_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "New York") 
-queens_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Queens") 
-richmond_neighborhoods = codes_with_neighborhood_not_in_zori |> filter(county == "Richmond") 
 ```
 There are `r length(unique(pull(zip_codes_not_in_zori, zip_code)))` ZIP codes that appear in `zip_codes_nyc` but not `zori_nyc`. Of these, `r sum(is.na(pull(zip_codes_not_in_zori, neighborhood)))` ZIP codes have no associated neighborhood. The remaining `r length(unique(pull(zip_codes_not_in_zori, zip_code))) - sum(is.na(pull(zip_codes_not_in_zori, neighborhood)))` ZIP codes are in `r length(unique(pull(codes_with_neighborhood_not_in_zori, neighborhood)))` distinct neighborhoods across all 5 counties:
 
-  *    **Bronx** - `r unique(pull(bronx_neighborhoods, neighborhood))`
-  *    **Kings** - `r unique(pull(kings_neighborhoods, neighborhood))`
-  *    **New York** - `r unique(pull(newyork_neighborhoods, neighborhood))`
-  *    **Queens** - `r unique(pull(queens_neighborhoods, neighborhood))`
-  *    **Richmond** - `r unique(pull(richmond_neighborhoods, neighborhood))`
+  *    **Bronx** - `r unique(pull(filter(codes_with_neighborhood_not_in_zori, county == "Bronx"), neighborhood))`
+  *    **Kings** - `r unique(pull(filter(codes_with_neighborhood_not_in_zori, county == "Kings"), neighborhood))`
+  *    **New York** - `r unique(pull(filter(codes_with_neighborhood_not_in_zori, county == "New York"), neighborhood))`
+  *    **Queens** - `r unique(pull(filter(codes_with_neighborhood_not_in_zori, county == "Queens"), neighborhood))`
+  *    **Richmond** - `r unique(pull(filter(codes_with_neighborhood_not_in_zori, county == "Richmond"), neighborhood))`
   
 The Zillow website says that the Zillow Observed Rent Index (ZORI) "measures changes in asking rents over time" by "calculating price differences for the same rental unit over time, then aggregating those differences across all properties repeatedly listed for rent on Zillow". If a certain neighborhood has a majority of properties that are owned (not rented) or are commercial, then there may not be a ZORI with insufficient data. 
 
 Illustrative Examples:
 
-  *    **South Shore, Richmond** - Home ownership rate was 79.3% in 2023 ([from DataUSA ](https://datausa.io/profile/geo/nyc-staten-island-community-district-3-south-shore-puma-ny))
-  * **Hunts Point and Mott Haven, Bronx** - The land area in Hunts Point is dominated by industry ([from Wikipedia ](https://en.wikipedia.org/wiki/Hunts_Point,_Bronx))
-  * **Canarsie and Flatlands, Kings** - In 2023, the home ownership rate in Flatlands/Canarsie was 58.6% ([from NYU Furman Center ](https://furmancenter.org/neighborhoods/view/flatlands-canarsie))
+  *    **South Shore, Richmond** - Home ownership rate was 79.3% in 2023 ([from DataUSA ](https://datausa.io/profile/geo/nyc-staten-island-community-district-3-south-shore-puma-ny)).
+  * **Hunts Point and Mott Haven, Bronx** - The land area in Hunts Point is dominated by industry ([from Wikipedia ](https://en.wikipedia.org/wiki/Hunts_Point,_Bronx)).
+  * **Canarsie and Flatlands, Kings** - In 2023, the home ownership rate in Flatlands/Canarsie was 58.6% ([from NYU Furman Center ](https://furmancenter.org/neighborhoods/view/flatlands-canarsie)).
+  * **Chelsea and Clinton, New York** - This area is specifically from zip code `r unique(pull(filter(codes_with_neighborhood_not_in_zori, neighborhood == "Chelsea and Clinton"), zip_code))`, which is by Rockefeller Center and has 0 households ([from ZipCode.org](https://zipcode.org/10020)).
 
 ```{r}
 top10_rental_price_change = zori_nyc_neighborhoods |> 
