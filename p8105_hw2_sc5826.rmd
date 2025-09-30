@@ -127,10 +127,10 @@ The resulting data set, `pols_snp_unemployment_df`, has `r nrow(pols_snp_unemplo
 
 
 ## Problem 2
-Reading and cleaning the `Mr. Trash Wheel` data set. Since the given month is not a factor, I'm using the same recoding pipeline as Problem 1, using `date` as the ground truth and getting rid of the original month and year variables. I'm also excluding the last row (row 655 in the original Excel sheet), which contains the sum of each column. These values can always be recalculated using the R data frame. 
+Reading and cleaning the `Mr. Trash Wheel` data set. Since the given month is not a factor, I'm using the same recoding pipeline as Problem 1, using `date` as the ground truth and getting rid of the original month and year variables. I'm also excluding the last row (row 710 in the original Excel sheet), which contains the sum of each column. These values can always be recalculated using the R data frame. 
 ```{r}
 mr_trash_wheel_data = 
-  read_excel("./data/202409_Trash_Wheel_Collection_Data.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N653") |> 
+  read_excel("./data/202509_Trash_Wheel_Collection_Data.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N709") |> 
   janitor::clean_names() |> 
   select(-month, -year) |> 
   separate("date", into = c("year", "month", "day"), sep = "-", convert = TRUE) |> 
@@ -158,10 +158,10 @@ mr_trash_wheel_data =
   relocate(glass_bottles, sports_balls, .after = "trash_wheel")
 ```
 
-Reading and cleaning the `Professor Trash Wheel` data set. Same justifications for getting rid of original month and year columns and row 123 which has sums. 
+Reading and cleaning the `Professor Trash Wheel` data set. Same justifications for getting rid of original month and year columns and row 135 which has sums. 
 ```{r}
 prof_trash_wheel_data = 
-  read_excel("./data/202409_Trash_Wheel_Collection_Data.xlsx", sheet = "Professor Trash Wheel", range = "A2:M120") |> 
+  read_excel("./data/202509_Trash_Wheel_Collection_Data.xlsx", sheet = "Professor Trash Wheel", range = "A2:M134") |> 
   janitor::clean_names() |> 
   select(-month, -year) |> 
   separate("date", into = c("year", "month", "day"), sep = "-", convert = TRUE) |> 
@@ -188,10 +188,10 @@ prof_trash_wheel_data =
   relocate(glass_bottles, .after = "trash_wheel")
 ```
 
-Reading and cleaning the `Gwynnda Trash Wheel` data set. Same justifications for getting rid of original month and year columns and row 266 which has sums. 
+Reading and cleaning the `Gwynns Falls Trash Wheel` data set. Same justifications for getting rid of original month and year columns and row 352 which has sums. 
 ```{r}
-gwynnda_trash_wheel_data = 
-  read_excel("./data/202409_Trash_Wheel_Collection_Data.xlsx", sheet = "Gwynnda Trash Wheel", range = "A2:L265") |> 
+gwynns_falls_trash_wheel_data = 
+  read_excel("./data/202509_Trash_Wheel_Collection_Data.xlsx", sheet = "Gwynns Falls Trash Wheel", range = "A2:L351") |> 
   janitor::clean_names() |> 
   select(-month, -year) |> 
   separate("date", into = c("year", "month", "day"), sep = "-", convert = TRUE) |> 
@@ -213,18 +213,18 @@ gwynnda_trash_wheel_data =
         `12` = "December"
         ),
     month = factor(month, levels = month_order),
-    trash_wheel = "Gwynnda Trash Wheel"
+    trash_wheel = "Gwynns Falls Trash Wheel"
   )
 ```
 
 Combining the data sets, moving the dates and `trash_wheel` name to the front of the resulting data set, arranging all observations chronological order and `trash_wheel` name. 
 ```{r}
-trash_wheel_data = bind_rows(mr_trash_wheel_data, prof_trash_wheel_data, gwynnda_trash_wheel_data) |> 
+trash_wheel_data = bind_rows(mr_trash_wheel_data, prof_trash_wheel_data, gwynns_falls_trash_wheel_data) |> 
   relocate(year, month, day, trash_wheel) |> 
   arrange(year, month, day, trash_wheel)
 ```
 
-In `mr_trash_wheel_data`, there are `r nrow(mr_trash_wheel_data)` observations and `r length(unique(pull(mr_trash_wheel_data,dumpster)))` unique dumpsters. In `prof_trash_wheel_data`, there are `r nrow(prof_trash_wheel_data)` observations and `r length(unique(pull(prof_trash_wheel_data,dumpster)))` unique dumpsters. In `gwynnda_trash_wheel_data`, there are `r nrow(gwynnda_trash_wheel_data)` observations and only `r length(unique(pull(gwynnda_trash_wheel_data,dumpster)))` unique dumpsters. This is unlike the other 2 datasets, which have 1 observation for each dumpster. Looking closer at `gwynnda_trash_wheel_data`, dumpster 21 has `r sum(pull(gwynnda_trash_wheel_data, dumpster) == 21)` observations.
+In `mr_trash_wheel_data`, there are `r nrow(mr_trash_wheel_data)` observations and `r length(unique(pull(mr_trash_wheel_data,dumpster)))` unique dumpsters. In `prof_trash_wheel_data`, there are `r nrow(prof_trash_wheel_data)` observations and `r length(unique(pull(prof_trash_wheel_data,dumpster)))` unique dumpsters. In `gwynns_falls_trash_wheel_data`, there are `r nrow(gwynns_falls_trash_wheel_data)` observations and only `r length(unique(pull(gwynns_falls_trash_wheel_data,dumpster)))` unique dumpsters. This is unlike the other 2 datasets, which have 1 observation for each dumpster. Looking closer at `gwynns_falls_trash_wheel_data`, dumpster 21 has `r sum(pull(gwynns_falls_trash_wheel_data, dumpster) == 21)` observations.
 
 
 ```{r echo=TRUE}
@@ -235,20 +235,14 @@ total_weight_tons_prof_trash_wheel = trash_wheel_data |>
   sum() |> 
   as.character()
 
-total_cigarette_butts_gwynnda = trash_wheel_data |> 
-  filter(trash_wheel == "Gwynnda Trash Wheel", year == 2022, month == "June") |> 
+total_cigarette_butts_gwynns_falls = trash_wheel_data |> 
+  filter(trash_wheel == "Gwynns Falls Trash Wheel", year == 2022, month == "June") |> 
   select(cigarette_butts) |> 
   sum() |> 
   as.character()
 ```
 
-
-The combined data set `trash_wheel_data` has `r nrow(trash_wheel_data)` observations and `r ncol(trash_wheel_data)` variables. Each unique observation is noted by the date (`year`, `month`, and `day`), the name of the `trash_wheel` (`r unique(pull(trash_wheel_data, trash_wheel))`), and the `dumpster` number. Some observations have missing data for the remaining variables (e.g. `plastic_bottles`, `polystyrene`, `cigarette_butts`, `plastic_bags`, `wrappers`, `homes_powered`, `glass_bottles`, `sports_balls`). Professor Trash Wheel collected `r total_weight_tons_prof_trash_wheel` tons of trash in total. The original excel data omits the last 2 rows in the calculated sum of 241.26, which is why the sums are different. In June of 2022, Gwynnda collected `r total_cigarette_butts_gwynnda` cigarette butts. 
-
-
-
-
-
+The combined data set `trash_wheel_data` has `r nrow(trash_wheel_data)` observations and `r ncol(trash_wheel_data)` variables. Each unique observation is noted by the date (`year`, `month`, and `day`), the name of the `trash_wheel` (`r unique(pull(trash_wheel_data, trash_wheel))`), and the `dumpster` number. Some observations have missing data for the remaining variables (e.g. `plastic_bottles`, `polystyrene`, `cigarette_butts`, `plastic_bags`, `wrappers`, `homes_powered`, `glass_bottles`, `sports_balls`). Professor Trash Wheel collected `r total_weight_tons_prof_trash_wheel` tons of trash in total. The original excel data omits the last 2 rows in the calculated sum of 241.26, which is why the sums are different. In June of 2022, Gwynns Falls collected `r total_cigarette_butts_gwynns_falls` cigarette butts. 
 
 ## Problem 3
 Cleaning the `zip_codes_nyc` data set. FIPS is Federal Information Processing System Codes for States and Counties. 
